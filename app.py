@@ -3,13 +3,10 @@ import sys
 import pathlib
 
 import streamlit as st
-
-# Ensure src/ is importable when running from the project root.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from src.agent import generate_prep_kit
 
-# ── Page configuration ────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Interview Trainer Agent",
     page_icon="🎯",
@@ -21,7 +18,6 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    /* ── Global typography ── */
     html, body, [class*="css"] {
         font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
     }
@@ -70,7 +66,6 @@ st.markdown(
     }
     .feature-card .fc-desc { font-size: 0.78rem; color: #57606a; line-height: 1.4; }
 
-    /* ── Section header pills ── */
     .section-pill {
         display: inline-flex;
         align-items: center;
@@ -101,8 +96,6 @@ st.markdown(
     .hr-badge {
         background: #7c3aed;
     }
-
-    /* ── Answer / tip / star boxes ── */
     .answer-box {
         background: #f0f6ff;
         border-left: 4px solid #2563eb;
@@ -131,8 +124,6 @@ st.markdown(
         font-size: 0.93rem;
         line-height: 1.65;
     }
-
-    /* ── Checklist items ── */
     .checklist-card {
         background: #ffffff;
         border: 1px solid #e5e7eb;
@@ -147,7 +138,6 @@ st.markdown(
     }
     .checklist-card .check-icon { color: #22c55e; font-size: 1rem; flex-shrink: 0; }
 
-    /* ── Profile summary card (sidebar) ── */
     .profile-card {
         background: linear-gradient(135deg, #1e3a5f, #2563eb);
         border-radius: 10px;
@@ -512,8 +502,6 @@ if generate_btn:
         "role": target_role,
         "level": experience_level,
     }
-
-    # Pass the uploaded file's bytes as a BytesIO if present.
     file_obj = None
     if uploaded_file is not None:
         file_obj = io.BytesIO(uploaded_file.getvalue())
@@ -563,7 +551,7 @@ if generate_btn:
             st.stop()
 
 
-# ── Render the stored prep kit (persists across reruns) 
+# ── Render the stored prep kit
 if st.session_state.prep_kit is not None:
     _render_prep_kit(st.session_state.prep_kit, st.session_state.last_profile)
 else:
