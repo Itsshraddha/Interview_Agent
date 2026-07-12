@@ -1,0 +1,153 @@
+KNOWLEDGE BASE: Product Manager Interview Questions & Guidelines
+===============================================================
+
+ROLE: Product Manager / Senior PM / Group PM
+EXPERIENCE LEVELS: Entry (0-2 yrs), Mid (2-5 yrs), Senior (5+ yrs)
+
+------------------------------------------------------------------
+SECTION 1: PRODUCT SENSE & DESIGN
+------------------------------------------------------------------
+
+Q: How would you design a product to help remote workers stay focused?
+Framework — always follow this structure:
+1. Clarify scope: who is the user (solo freelancer, team at a company, specific industry)?
+2. Identify user pain points: distractions, lack of routine, isolation, meeting overload.
+3. Define success metrics: daily active usage, session focus duration, user retention.
+4. Propose solutions: Pomodoro timer with team accountability, distraction-blocking, async
+   standup summaries, ambient sound environments.
+5. Prioritize by impact × effort. Pick one core feature and go deep.
+6. Define MVP and launch strategy.
+Tips:
+- Always ask a clarifying question before answering.
+- Show empathy — understand the emotional and practical pain of the user.
+- Prioritize with a framework (RICE, ICE) rather than gut feel.
+
+Q: Walk me through how you would improve YouTube's recommendation algorithm for new users.
+Framework:
+1. Define the problem: cold-start problem — no watch history to base recommendations on.
+2. User segmentation: new visitor, new account, account migrating from another platform.
+3. Current state: YouTube asks for topic interests on signup.
+4. Ideas: ask 3 interest questions + show diverse category grid, use trending/viral content
+   as default, leverage device/location signals, collaborative filtering from similar profiles.
+5. Metrics: CTR on recommendations, watch time in first session, D7 retention.
+6. Tradeoffs: privacy (using device data) vs. personalization quality.
+Tips:
+- Frame improvements around a specific metric, not vague "better experience."
+- Discuss experimentation strategy — how you'd A/B test the changes.
+- Mention guardrail metrics to prevent harm (e.g., clickbait optimization).
+
+Q: How do you define and measure product-market fit?
+A: Product-market fit (PMF) occurs when a product satisfies a strong market demand. Sean Ellis
+test: ask users "How would you feel if you could no longer use this product?" — PMF threshold
+is >40% responding "very disappointed." Other signals: high retention (D30 > 40% for consumer),
+strong NPS (>50), organic growth/word-of-mouth, low churn, users pulling others in.
+Quantitative PMF signals: DAU/MAU ratio >20%, cohort retention curves flattening, declining CAC.
+Tips:
+- Distinguish between "engagement PMF" and "revenue PMF" — both matter.
+- PMF is not binary; it exists on a spectrum and can be lost (product drift).
+- For B2B: contract renewals, expansion revenue, and champion advocacy are strong signals.
+
+------------------------------------------------------------------
+SECTION 2: PRIORITIZATION FRAMEWORKS
+------------------------------------------------------------------
+
+Q: How do you prioritize a product roadmap when everything seems equally important?
+A: Use a structured framework:
+- RICE: Reach × Impact × Confidence / Effort. Quantifies features into a single score.
+- ICE: Impact × Confidence × Ease. Faster to compute; good for early-stage.
+- MoSCoW: Must-have, Should-have, Could-have, Won't-have. Useful for sprint planning.
+- Opportunity Scoring (Ulwick): gap between importance and satisfaction of user needs.
+- Weighted scoring: define custom criteria (strategic alignment, revenue potential, user pain)
+  and weight them by business priority.
+In practice: combine frameworks with stakeholder input and data. Never prioritize by the
+loudest voice in the room.
+Tips:
+- Always tie prioritization to OKRs or company strategy.
+- Document your reasoning — decisions need to be explainable to engineering and leadership.
+- Revisit and rerank quarterly as market conditions change.
+
+Q: A CEO wants Feature A, Engineering wants to address Technical Debt, and Sales wants Feature B.
+   How do you decide what to build next?
+Framework:
+1. Understand the underlying goal behind each request (why does the CEO want A? What customer
+   problem does Sales' Feature B solve?).
+2. Map each to impact on key metrics (revenue, retention, NPS, scalability).
+3. Assess urgency vs. importance: technical debt may block future velocity.
+4. Create a scoring matrix with agreed-upon criteria; run it with all stakeholders.
+5. Propose a balanced roadmap: e.g., 70% new features, 20% tech debt, 10% experiments.
+6. Get buy-in through a transparent decision process, not a command.
+Tips:
+- Show that you can hold ground while remaining data-driven — not a pushover, not a tyrant.
+- Bring data to the conversation: user research, support ticket volume, conversion data.
+- "Disagree and commit" is a valid outcome — document it.
+
+------------------------------------------------------------------
+SECTION 3: METRICS & ANALYTICS
+------------------------------------------------------------------
+
+Q: How would you define the North Star Metric for a ride-sharing app like Uber?
+A: North Star Metric (NSM) captures the core value delivered to users and correlates with
+long-term business health. For Uber: "Trips completed per week" is a strong NSM — it captures
+supply-demand matching, driver and rider activity, and revenue generation simultaneously.
+Alternative: "Gross Bookings" captures revenue but not experience quality.
+Supporting metrics (input metrics): driver availability, ETA accuracy, rider conversion rate,
+driver earnings per hour. Guardrail metrics: cancellation rate, safety incidents, refund rate.
+Tips:
+- The NSM should be a leading indicator (predictive), not a lagging indicator (revenue).
+- Avoid vanity metrics: total signups, page views with no action.
+- One NSM, many supporting metrics — don't build a metric tree that nobody uses.
+
+Q: A key metric dropped 20% last week. How do you diagnose it?
+Framework (structured diagnosis):
+1. Confirm the data: is it a measurement error, logging bug, or dashboard issue?
+2. Segment the drop: by platform (iOS/Android/web), geography, user segment, feature.
+3. Check for external factors: app store update, competitor launch, media event, holiday.
+4. Check for internal changes: recent deployment, A/B test launch, email campaign.
+5. Correlate with supporting metrics: if DAU dropped, did session length also drop?
+6. Form a hypothesis and validate with additional data queries.
+7. Write a post-mortem: root cause, immediate fix, long-term prevention.
+Tips:
+- Always start by validating the data — 30% of metric drops are measurement issues.
+- Segment, segment, segment — the answer is almost always hiding in a subsegment.
+- Communicate proactively: update stakeholders before they find out themselves.
+
+------------------------------------------------------------------
+SECTION 4: GO-TO-MARKET & STRATEGY
+------------------------------------------------------------------
+
+Q: How would you launch a new feature to 1 million users?
+Launch checklist framework:
+1. Define success criteria before launch (primary metric, guardrail metrics, timeline).
+2. Internal readiness: engineering sign-off, QA complete, on-call runbook, rollback plan.
+3. Staged rollout: 1% → 5% → 20% → 100% with monitoring gates at each stage.
+4. Comms plan: internal (Eng, CS, Sales), external (in-app notification, email, blog post).
+5. Customer support: update FAQ, train CS team, prepare escalation path.
+6. Monitor for 48-72 hours post full rollout; have rollback ready for first 7 days.
+Tips:
+- Never go 0-100% on launch day — staged rollout is non-negotiable for >100k users.
+- Define what "bad" looks like before launching so the rollback trigger is clear.
+- Celebrate the launch internally — recognition motivates the team for the next one.
+
+------------------------------------------------------------------
+SECTION 5: PM BEHAVIORAL QUESTIONS
+------------------------------------------------------------------
+
+Q: Tell me about a product decision you made that turned out to be wrong.
+STAR Guide:
+- Situation: describe the context and the decision you made.
+- Task: your responsibility in that decision.
+- Action: what data/reasoning led you to the decision; what you did when you realized it was wrong.
+- Result: what you changed, what you learned, how you applied it to future decisions.
+Strong indicators: intellectual honesty, data-driven pivots, learning from failure.
+Red flags: blaming the data, engineering, or market; not having a clear lesson.
+
+Q: How do you work with engineers who push back on your timelines?
+A: Healthy tension between PM and Eng is normal and productive. Approach:
+1. Understand the technical constraints — never dismiss engineering concerns.
+2. Renegotiate scope (MVP vs. full feature) to hit the business deadline.
+3. Provide business context for why the timeline matters (customer commitment, market window).
+4. Ask "What would make this possible?" rather than "Why can't you do this?"
+5. Document and communicate scope changes to all stakeholders.
+Tips:
+- Engineers respect PMs who understand trade-offs and don't mandate deadlines without context.
+- Build credibility by being right about priorities — your track record opens doors.

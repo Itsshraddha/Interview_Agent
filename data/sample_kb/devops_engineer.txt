@@ -1,0 +1,193 @@
+KNOWLEDGE BASE: DevOps Engineer Interview Questions & Guidelines
+================================================================
+
+ROLE: DevOps Engineer / Site Reliability Engineer / Platform Engineer
+EXPERIENCE LEVELS: Entry (0-2 yrs), Mid (2-5 yrs), Senior (5+ yrs)
+
+------------------------------------------------------------------
+SECTION 1: CI/CD PIPELINES
+------------------------------------------------------------------
+
+Q: Explain the stages of a CI/CD pipeline and best practices for each.
+A: A well-structured CI/CD pipeline:
+1. Source Control: Git branching strategy (Gitflow, trunk-based). PRs require review + passing CI.
+2. Build: compile/package the application; create a deterministic artifact (Docker image, JAR).
+3. Unit & Integration Tests: run fast tests first (fail fast principle); target >80% coverage.
+4. Static Analysis / SAST: linting (ESLint, Flake8), security scanning (Snyk, Semgrep).
+5. Artifact Registry: push versioned image to registry (ECR, DockerHub, Artifact Registry).
+6. Deploy to Staging: automated deploy; run smoke tests and E2E tests.
+7. Deploy to Production: approval gate (manual or automated); canary or blue-green rollout.
+8. Post-deploy monitoring: alert if error rate or latency spikes within 15 minutes.
+Tips:
+- Pipeline runtime should be under 10 minutes for developer velocity.
+- Every step must be idempotent — re-running must produce the same result.
+- Secrets must never appear in logs or environment variable dumps.
+
+Q: What is the difference between blue-green deployment and canary deployment?
+A: Blue-green: maintain two identical production environments (blue = live, green = new version).
+After testing green, switch the load balancer to route 100% traffic to green instantly.
+Rollback = flip back to blue. Zero downtime; requires double the infrastructure cost temporarily.
+Canary: gradually shift traffic from old to new (e.g., 5% → 20% → 100%) while monitoring
+error rates, latency, and business metrics at each stage. Limits blast radius of a bad deploy.
+Best for: canary when you want statistical confidence before full rollout; blue-green when
+instant rollback capability is critical and infra cost is acceptable.
+Tips:
+- Canary requires feature flags or weighted routing (Nginx, Istio, AWS ALB weighted target groups).
+- Automate canary analysis with tools like Argo Rollouts or Spinnaker.
+- Always define rollback triggers quantitatively (e.g., error rate > 1% → auto-rollback).
+
+------------------------------------------------------------------
+SECTION 2: DOCKER & KUBERNETES
+------------------------------------------------------------------
+
+Q: Explain the Docker image build process and best practices for production images.
+A: Docker builds images layer by layer from a Dockerfile. Each instruction (RUN, COPY, ADD)
+creates a layer cached independently. Best practices for production:
+1. Use minimal base images (python:3.11-slim, distroless, alpine).
+2. Multi-stage builds: compile in a build stage, copy only artifacts to a minimal runtime stage.
+3. Run as non-root user (USER directive) — never run production containers as root.
+4. Pin versions explicitly: FROM python:3.11.9-slim not FROM python:latest.
+5. Use .dockerignore to exclude dev files, tests, .git from the build context.
+6. Scan images for CVEs before pushing (Trivy, Grype, Snyk Container).
+7. Keep images small (<200MB where possible) — large images slow pull times and increase attack surface.
+Tips:
+- Layer ordering matters for cache efficiency: COPY requirements.txt + RUN pip install BEFORE COPY . .
+- Use BuildKit (DOCKER_BUILDKIT=1) for parallel layer building and secret mounting.
+- Tag images with git SHA for traceability, not just "latest."
+
+Q: What is a Kubernetes Pod, Deployment, and Service? How do they relate?
+A: Pod: the smallest deployable unit in Kubernetes — one or more containers sharing networking
+and storage. Pods are ephemeral; never reference a Pod directly in production.
+Deployment: manages a ReplicaSet of identical Pods; handles rolling updates, rollbacks, and
+self-healing (restarts crashed Pods). Define desired state; the controller reconciles actual state.
+Service: a stable network endpoint that load-balances traffic across Pod replicas using a label
+selector. Types: ClusterIP (internal), NodePort (node-level access), LoadBalancer (cloud LB),
+ExternalName. A Deployment + Service is the standard production pattern.
+Tips:
+- Liveness probe: restarts a stuck container. Readiness probe: removes Pod from Service endpoints
+  until it's ready. ConfigureMANDATORY both in production.
+- Horizontal Pod Autoscaler (HPA) scales replicas based on CPU/memory or custom metrics.
+- Namespace provides soft multi-tenancy; RBAC + NetworkPolicy provide hard boundaries.
+
+Q: How do you manage configuration and secrets in Kubernetes?
+A: ConfigMaps: store non-sensitive config (env vars, config files) as key-value pairs.
+Inject into Pods as env vars or mounted volumes. Never store secrets in ConfigMaps.
+Secrets: base64-encoded (NOT encrypted by default) key-value pairs. Enable encryption at rest
+in etcd (EncryptionConfiguration). In production, use external secret stores:
+- AWS Secrets Manager / Parameter Store + External Secrets Operator (ESO)
+- HashiCorp Vault + Vault Agent Sidecar or Vault Secrets Operator
+- Sealed Secrets (Bitnami) — encrypt secrets committed to Git
+Tips:
+- base64 is encoding, not encryption — treat Kubernetes Secrets as sensitive objects.
+- Rotate secrets automatically; never hardcode TTL > 90 days for production credentials.
+- Audit secret access with Kubernetes audit logs.
+
+------------------------------------------------------------------
+SECTION 3: INFRASTRUCTURE AS CODE
+------------------------------------------------------------------
+
+Q: Explain Terraform's state file and why it matters.
+A: Terraform maintains a state file (terraform.tfstate) mapping your configuration to real
+infrastructure resources. It is the source of truth for what Terraform manages — without it,
+Terraform cannot determine what exists vs. what needs to be created/updated/destroyed.
+Remote state (S3 + DynamoDB for locking, Azure Blob, GCS) is mandatory for teams:
+1. Prevents concurrent applies (state locking).
+2. Enables collaboration — single source of truth.
+3. Supports state sharing across modules via terraform_remote_state.
+State drift: real infrastructure changes outside Terraform; fix with terraform refresh or import.
+Tips:
+- Never manually edit the state file — use terraform state mv, rm, import commands.
+- Store state in encrypted remote backend; treat it as sensitive (contains resource metadata).
+- Use workspaces or separate state files per environment (dev/staging/prod).
+
+Q: What is idempotency and why is it critical for Infrastructure as Code?
+A: Idempotency means applying the same operation multiple times produces the same result.
+In IaC: running terraform apply 3 times on an unchanged config should make 0 changes.
+Ansible: use modules (file, package, service) not shell commands — modules are idempotent;
+raw shell scripts often are not (e.g., echo "line" >> file adds duplicates).
+Non-idempotent IaC causes: config drift, failed re-runs, untestable automation, hard rollbacks.
+Tips:
+- Test idempotency by running your apply/playbook twice in a row — second run should show no changes.
+- Use Terraform plan in CI to detect unexpected infrastructure changes before applying.
+- For Ansible: check_mode (--check) verifies what would change without making changes.
+
+------------------------------------------------------------------
+SECTION 4: MONITORING & OBSERVABILITY
+------------------------------------------------------------------
+
+Q: Explain the three pillars of observability.
+A: Metrics: numerical time-series data (CPU %, request rate, error rate, p99 latency).
+Tools: Prometheus (scraping + storage), Grafana (dashboards), Datadog, CloudWatch.
+Logs: structured event records (JSON preferred for machine parsing). Centralize with ELK stack,
+Loki, or Splunk. Log at appropriate levels — avoid noisy DEBUG in production.
+Traces: distributed tracing captures the full lifecycle of a request across services.
+Tools: Jaeger, Zipkin, AWS X-Ray, OpenTelemetry (vendor-neutral instrumentation standard).
+Together: metrics tell you WHAT is broken, logs tell you WHY, traces tell you WHERE.
+Tips:
+- OpenTelemetry is the industry standard for instrumentation — avoid vendor lock-in.
+- Alert on symptoms (high error rate, slow p99) not causes (high CPU) — symptom alerts are more actionable.
+- The Golden Signals (Google SRE): Latency, Traffic, Errors, Saturation — instrument all four.
+
+Q: What are SLIs, SLOs, and SLAs? How do you set them?
+A: SLI (Service Level Indicator): a specific quantifiable metric of service behavior.
+  Examples: availability (% requests returning 2xx), latency (% requests < 200ms), error rate.
+SLO (Service Level Objective): the target value/range for an SLI over a time window.
+  Example: 99.9% of requests respond in < 200ms over a 30-day rolling window.
+SLA (Service Level Agreement): a contractual commitment to customers — often less strict than
+  SLOs; breaching SLAs typically triggers financial penalties.
+Error budget = 1 - SLO. If SLO = 99.9%, error budget = 0.1% of requests can fail.
+Spend error budget on velocity (risky deployments); when budget is exhausted, freeze deploys.
+Tips:
+- Set SLOs based on user pain — don't start with "five nines" unless the cost of downtime justifies it.
+- Make SLOs ambitious but achievable — aspirational SLOs kill on-call morale when constantly breached.
+- Review SLOs quarterly; tighten as systems mature.
+
+------------------------------------------------------------------
+SECTION 5: INCIDENT RESPONSE
+------------------------------------------------------------------
+
+Q: Walk me through how you handle a production incident.
+Framework (ITIL-inspired + SRE best practices):
+1. Detect: alert fires (PagerDuty, OpsGenie) or user report.
+2. Acknowledge: on-call engineer takes ownership within SLA response time.
+3. Mitigate first, diagnose second: roll back the last deployment if timing correlates.
+4. Communicate: open a war room (Slack, Zoom); assign Incident Commander, Tech Lead, Comms roles.
+5. Status page update: communicate to customers within 5 minutes of confirmed incident.
+6. Root cause analysis (RCA): gather logs, traces, metrics; form hypotheses; test each.
+7. Resolve: apply fix; monitor for 30+ minutes before declaring resolved.
+8. Post-mortem (blameless): document timeline, root cause, contributing factors, action items.
+Tips:
+- Blameless post-mortems: the system failed, not the person. Focus on process improvements.
+- "What happened?" not "Who did it?" — blame-culture kills incident transparency.
+- Each post-mortem should produce actionable tickets, not just observations.
+
+------------------------------------------------------------------
+SECTION 6: NETWORKING & SECURITY
+------------------------------------------------------------------
+
+Q: Explain the difference between L4 and L7 load balancers.
+A: L4 (Transport Layer): load balances based on IP address and TCP/UDP port. Fast; no awareness
+of HTTP content. Use cases: TCP load balancing, UDP services, lowest latency requirements.
+Examples: AWS NLB, HAProxy (TCP mode).
+L7 (Application Layer): load balances based on HTTP content — URL path, headers, cookies, host.
+Enables: path-based routing (/api → API service, /static → CDN), sticky sessions, SSL termination,
+header injection, WAF integration. Examples: AWS ALB, Nginx, Istio ingress, Traefik.
+Tips:
+- Use L7 for microservices — routing by path/header enables independent deployments.
+- SSL termination at L7 reduces load on backend services.
+- L4 is better for non-HTTP protocols (database proxies, game servers, VoIP).
+
+Q: What is zero-trust networking and how do you implement it?
+A: Zero-trust: "never trust, always verify" — no implicit trust based on network location.
+Every request is authenticated and authorized regardless of whether it originates inside or
+outside the corporate network. Core principles:
+1. Verify identity: mTLS for service-to-service, OAuth/OIDC for users.
+2. Least-privilege access: RBAC, deny-by-default network policies.
+3. Micro-segmentation: NetworkPolicy in Kubernetes restricts pod-to-pod communication.
+4. Continuous monitoring: log all access attempts; alert on anomalies.
+Implementation tools: Istio service mesh (mTLS), BeyondCorp (Google's model), HashiCorp Vault
+for secrets, OPA/Gatekeeper for policy enforcement in Kubernetes.
+Tips:
+- Zero trust is a journey, not a binary state — start with identity and work outward.
+- Service mesh (Istio/Linkerd) gives you mTLS with minimal application code changes.
+- Audit access logs regularly — unused service-to-service permissions are attack surface.

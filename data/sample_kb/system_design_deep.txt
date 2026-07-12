@@ -1,0 +1,214 @@
+KNOWLEDGE BASE: System Design Deep Dives
+=========================================
+
+ROLE: Software Engineer / Backend Engineer / Senior Engineer / Staff Engineer
+FOCUS: System design interview preparation — framework, case studies, tradeoffs
+
+------------------------------------------------------------------
+SECTION 1: SYSTEM DESIGN INTERVIEW FRAMEWORK
+------------------------------------------------------------------
+
+Step-by-step approach (use this structure in every system design interview):
+
+1. REQUIREMENTS CLARIFICATION (5 min)
+   - Functional requirements: core user-facing features (e.g., post a tweet, read a feed).
+   - Non-functional requirements: scale (DAU, QPS), latency SLO, consistency, availability,
+     durability, geographic distribution.
+   - Out of scope: explicitly state what you are NOT building.
+
+2. CAPACITY ESTIMATION (3 min)
+   - Estimate DAU, read/write ratio, storage per entity, bandwidth.
+   - Example: 100M DAU, 10% write daily = 10M writes/day = ~120 writes/sec.
+   - Storage: 10M tweets/day × 280 bytes × 365 days × 5 years = ~5TB text storage.
+
+3. HIGH-LEVEL DESIGN (7 min)
+   - Draw the major components: clients, API gateway, services, databases, caches, CDN.
+   - Define the data model (tables, key schemas) for the core entities.
+   - Define the core API endpoints (REST or gRPC).
+
+4. DEEP DIVES (15 min)
+   - Pick the hardest parts: the feed generation algorithm, the hot-spot problem, consistency
+     model, search indexing, etc.
+   - Explain tradeoffs explicitly: "I chose this approach because X, the alternative Y has
+     benefit Z but costs W."
+
+5. BOTTLENECKS & IMPROVEMENTS
+   - Identify single points of failure, potential hot shards, scaling limits.
+   - Propose mitigations: read replicas, caches, async processing, sharding strategies.
+
+------------------------------------------------------------------
+SECTION 2: CASE STUDY — TWITTER / SOCIAL MEDIA FEED
+------------------------------------------------------------------
+
+Problem: Design a social media feed (posts from users you follow), 100M DAU, 200M tweets/day.
+
+Data Model:
+- users(user_id, username, follower_count, created_at)
+- tweets(tweet_id, user_id, content, created_at)
+- follows(follower_id, followee_id, created_at)
+
+Feed Generation — two approaches:
+1. Pull (Fan-out on Read): at request time, fetch all followees, get their recent tweets, merge+sort.
+   Pros: no storage overhead, real-time. Cons: O(followees × tweets) queries per read — slow for users
+   following thousands of accounts.
+2. Push (Fan-out on Write): when a user tweets, write to every follower's pre-computed feed table.
+   Pros: O(1) read. Cons: O(followers) writes per tweet — expensive for celebrities (100M followers).
+3. Hybrid (Twitter's actual approach): push for normal users (<10k followers); pull for celebrities
+   (verified accounts); merge at read time.
+
+Caching: Cache the top 100 tweets for each user's feed in Redis (user_id → sorted list of tweet IDs).
+Content of tweets cached separately with TTL. Invalidate on new tweet from followed user.
+
+Handling hot users: celebrities use pull-based approach; precompute their top N tweets periodically
+and cache aggressively. Rate limit fan-out writes per tweet to protect the write path.
+
+Tips:
+- Always ask: read-heavy or write-heavy? (Twitter: read-heavy, ~100:1 read/write ratio.)
+- Fan-out on write is the standard answer but you MUST address the celebrity/hot-user problem.
+- CDN for media (images, videos) — never serve binary assets through the application tier.
+
+------------------------------------------------------------------
+SECTION 3: CASE STUDY — DISTRIBUTED CACHE (REDIS)
+------------------------------------------------------------------
+
+Problem: Design a distributed in-memory cache supporting GET, SET, DELETE. 10TB total data,
+< 1ms p99 latency, 99.99% availability.
+
+Architecture:
+- Consistent hashing for key → node mapping: add/remove nodes with minimal key remapping.
+- Replication: each shard has 1 primary + 2 replicas (read from replicas to scale reads).
+- Eviction: LRU policy by default; expose TTL per key.
+
+Consistency model:
+- Write to primary, async replicate to replicas: eventual consistency on reads.
+- For strong consistency: synchronous replication to at least one replica before ACK (costs latency).
+
+Cache invalidation strategies:
+- TTL: set expiry on every key — simple, handles eventual staleness.
+- Write-through: update cache on every DB write — consistent but adds write latency.
+- Write-back (lazy): update cache immediately, flush to DB asynchronously — fast writes, data loss risk.
+- Cache-aside (lazy loading): application reads from cache; on miss, reads from DB and populates cache.
+
+Hot key problem: single key receiving millions of QPS. Solutions:
+1. Key replication: store hot key on multiple nodes; route reads randomly across copies.
+2. Local cache: L1 in-process cache (LRU, ~1000 items) before hitting distributed cache.
+3. Request coalescing: batch parallel cache-miss DB lookups into a single query.
+
+Tips:
+- Redis Cluster uses hash slots (0-16383); consistent hashing is used conceptually but Redis
+  implements a fixed-slot scheme with resharding tools.
+- Thundering herd: when a popular cached item expires, thousands of requests hit the DB simultaneously.
+  Mitigation: probabilistic early expiration (PER), mutex lock on cache population (only one request
+  populates; others wait), or background refresh before TTL expires.
+
+------------------------------------------------------------------
+SECTION 4: CASE STUDY — RATE LIMITER
+------------------------------------------------------------------
+
+Problem: Design a rate limiter that enforces 100 requests/minute per user for a public API.
+
+Algorithms:
+1. Token Bucket: bucket fills at fixed rate; each request consumes one token. Allows bursting up to
+   bucket capacity. Most common choice — flexible, easy to implement.
+2. Fixed Window Counter: count requests in fixed 1-minute windows. Problem: burst at window boundary
+   (e.g., 100 req at 00:59 + 100 req at 01:01 = 200 req in 2 seconds).
+3. Sliding Window Log: store timestamp of each request; count within the last 60 seconds.
+   Accurate but memory-intensive for high-traffic APIs.
+4. Sliding Window Counter: hybrid — fixed window count + fractional previous window count.
+   Approximation of sliding log with O(1) memory.
+
+Storage:
+- Redis with atomic INCR + EXPIRE operations (INCR counter; EXPIRE counter 60).
+- For token bucket: store (tokens_remaining, last_refill_time) per user_id in Redis.
+- Lua scripts for atomicity: read-modify-write in a single round trip.
+
+Distributed considerations:
+- Each API server maintains a local counter (fast, no network); sync to Redis every N seconds.
+  Tradeoff: slightly higher actual limit than configured (eventual consistency).
+- Centralized Redis: accurate counts, Redis becomes bottleneck — use Redis Cluster.
+
+Response: 429 Too Many Requests; include Retry-After header with seconds until next allowed request.
+
+Tips:
+- Rate limit by user_id, IP, API key, or endpoint — often multiple dimensions simultaneously.
+- Leaky bucket is good for smoothing traffic (constant output rate); token bucket allows bursts.
+- For SaaS: different limits per plan tier — store limit config in a lookup table, not hardcoded.
+
+------------------------------------------------------------------
+SECTION 5: CASE STUDY — NOTIFICATION SYSTEM
+------------------------------------------------------------------
+
+Problem: Design a push notification system — 1B users, multi-channel (push, email, SMS).
+
+Architecture:
+- Notification Service: receives events from upstream services (order placed, friend request, etc.)
+- Fan-out: for each event, look up notification preferences and contact info; route to correct channel.
+- Channel workers: separate services for push (APNs/FCM), email (SendGrid/SES), SMS (Twilio).
+- Message queue (Kafka): decouple event producers from notification processing. Retries, dead-letter.
+- Template service: store notification templates (subject, body) by notification type + locale.
+- User preferences: each user stores per-channel, per-notification-type opt-in/opt-out settings.
+
+Reliability:
+- At-least-once delivery via Kafka — idempotent consumer logic to handle duplicate sends.
+- Dead-letter queue: after 3 retries, move failed notifications to DLQ for investigation.
+- Exponential backoff on transient failures (network timeouts, rate limits from APNs/Twilio).
+
+Deduplication:
+- Store sent notification IDs in Redis with TTL = 24 hours; check before sending.
+- Idempotency key passed to third-party providers (APNs, Twilio support idempotency headers).
+
+Throttling:
+- Limit notifications per user per hour to avoid spamming.
+- Batch non-urgent notifications (digest emails) into scheduled daily/weekly sends.
+
+Tips:
+- APNs and FCM are not guaranteed-delivery channels — design for graceful degradation.
+- Prioritize: critical alerts (2FA, security) should bypass throttling and batching.
+- Notification analytics: track delivery, open rate, click-through by channel and notification type.
+
+------------------------------------------------------------------
+SECTION 6: DATABASE SELECTION GUIDE
+------------------------------------------------------------------
+
+PostgreSQL (Relational):
+Use when: ACID transactions required, complex JOINs, strong consistency, financial/transactional data.
+Avoid when: horizontal write scaling needed, flexible/varying schema, >TB of hot data.
+
+Cassandra (Wide-column, distributed):
+Use when: massive write throughput, multi-region writes, time-series data, known access patterns.
+Data model: partition key drives distribution; clustering key drives sort order within partition.
+Avoid when: complex queries, JOINs, strong consistency required, low-volume use cases.
+
+Redis (In-memory key-value):
+Use when: sub-millisecond latency required, caching, session storage, leaderboards, rate limiting.
+Avoid when: data must survive restart (use RDB/AOF persistence or accept cache-aside), data > RAM.
+
+Elasticsearch (Distributed search):
+Use when: full-text search, log analytics, faceted filtering, geospatial queries.
+Data model: documents (JSON) indexed into shards with inverted indexes.
+Avoid when: primary data store (source of truth should be in a relational/document DB), ACID needed.
+
+MongoDB (Document):
+Use when: flexible/evolving schema, nested documents, developer velocity, moderate scale.
+Avoid when: complex multi-document transactions (limited), strict schema enforcement preferred.
+
+------------------------------------------------------------------
+SECTION 7: CACHING STRATEGIES
+------------------------------------------------------------------
+
+Write-through: write to cache and DB simultaneously.
+  Pros: cache always current. Cons: write latency increases; cache filled with data that may never be read.
+
+Write-back (write-behind): write to cache only; flush to DB asynchronously in batches.
+  Pros: very fast writes. Cons: data loss if cache fails before flush; complex recovery.
+
+Write-around: write directly to DB, bypassing cache. Cache populated on next read miss.
+  Pros: avoids cache churn for write-heavy, read-once data. Cons: first read after write is slow (miss).
+
+Cache-aside (lazy loading): application checks cache first; on miss, loads from DB and populates cache.
+  Most common pattern. Cons: cache miss penalty on first access; potential stale reads until TTL expires.
+
+Cache eviction policies:
+- LRU (Least Recently Used): evict the item not accessed for the longest time. General-purpose default.
+- LFU (Least Frequently Used): evict the item with the fewest accesses. Better for stable popular items.
+- TTL-based: expire after fixed duration regardless of access. Simple; good for time-sensitive data.

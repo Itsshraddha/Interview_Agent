@@ -58,8 +58,8 @@ def get_credentials() -> Credentials:
     Credentials bundles the API key and regional endpoint URL.  Every other
     SDK object (APIClient, ModelInference, WatsonxEmbeddings) requires it.
     """
-    api_key = _require_env("WATSONX_APIKEY")
-    url = _require_env("WATSONX_URL")
+    api_key = _require_env("IBM_API_Key")
+    url = _require_env("Watsonx_URL")
 
     # Credentials automatically handles IAM token exchange under the hood —
     # no need to manually call the IAM token endpoint.
@@ -68,7 +68,7 @@ def get_credentials() -> Credentials:
 
 def get_project_id() -> str:
     """Return the watsonx.ai project ID from the environment."""
-    return _require_env("WATSONX_PROJECT_ID")
+    return _require_env("IBM_Watsonx_Project_ID")
 
 
 def get_api_client() -> APIClient:
@@ -113,30 +113,20 @@ def get_embedding_model() -> WatsonxEmbeddings:
 
 
 def get_generation_model(
-    max_new_tokens: int = 2048,
+    max_new_tokens: int = 4096,
     temperature: float = 0.3,
 ) -> ModelInference:
     """
     Return a configured ModelInference client for text generation.
 
-    ModelInference is the primary generation interface in ibm-watsonx-ai.
-    It is stateless — each call to .generate_text() sends an independent
-    request to the watsonx.ai API.
-
-    Parameters
-    ----------
-    max_new_tokens : Maximum number of tokens the model may generate per call.
-                     2048 is sufficient for a full interview prep kit in JSON.
-    temperature    : Controls randomness.  0.3 gives mostly deterministic
-                     but slightly varied outputs — good for structured JSON
-                     where consistency matters more than creativity.
+    max_new_tokens raised to 4096 — the v2 schema (8 tech + 5 behavioral +
+    roadmap + questions_to_ask) generates ~3000-3500 tokens of JSON.
+    2048 caused truncation / malformed JSON errors.
     """
     model_id = os.getenv("GRANITE_MODEL_ID", DEFAULT_GRANITE_MODEL_ID)
     credentials = get_credentials()
     project_id = get_project_id()
 
-    # ModelInference wraps REST calls to the /ml/v1/text/generation endpoint.
-    # The params dict is passed with every generation request unless overridden.
     return ModelInference(
         model_id=model_id,
         credentials=credentials,
@@ -144,9 +134,7 @@ def get_generation_model(
         params={
             "max_new_tokens": max_new_tokens,
             "temperature": temperature,
-            # decoding_method "greedy" ignores temperature; "sample" uses it.
             "decoding_method": "sample",
-            # Penalise repetition — important for list-style JSON outputs.
             "repetition_penalty": 1.1,
         },
     )

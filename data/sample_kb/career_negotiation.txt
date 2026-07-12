@@ -1,0 +1,191 @@
+KNOWLEDGE BASE: Career Development, Negotiation & Professional Branding
+=======================================================================
+
+FOCUS: Salary negotiation, offer evaluation, personal branding, career growth strategies
+
+------------------------------------------------------------------
+SECTION 1: SALARY NEGOTIATION
+------------------------------------------------------------------
+
+Core principle: Negotiation is expected. 85% of hiring managers have room to negotiate.
+The worst outcome is "no" — you will never lose an offer by negotiating professionally.
+
+Pre-negotiation research:
+- levels.fyi: real compensation data by company, level, and role (especially for Big Tech).
+- Glassdoor / LinkedIn Salary: broader market ranges by title, location, years of experience.
+- Blind (anonymous app): candid discussions from employees about comp at specific companies.
+- Offer letters from competing companies are your most powerful data point.
+
+Step-by-step negotiation process:
+1. Never give a number first if possible: "I'd like to understand the full comp structure
+   before discussing specific numbers."
+2. If forced to give a range: anchor high. Give a range where your FLOOR is your target.
+3. After receiving an offer, pause: "Thank you — this is exciting. Can I have 48 hours to review?"
+4. Counter with a specific number, not a range: "Based on my research and the competing offers
+   I have, I was hoping for $X. Is there flexibility to get there?"
+5. Frame around value and market data, not personal need: never say "I need X to pay my rent."
+
+When they say "this is our best offer":
+- "I appreciate that. Is there any flexibility on the signing bonus or equity component?"
+- "Could we revisit base salary after my first performance review in 6 months?"
+- "Is there any flexibility on the start date or remote work arrangement?"
+
+Negotiating beyond base salary:
+- Signing bonus: often easier to increase than base (one-time cost, doesn't compound).
+- Equity: negotiate number of shares AND vesting schedule (4 years with 1-year cliff is standard).
+- Remote flexibility: worth $5-15k/year in commute cost + quality of life.
+- Title: a higher title = higher comp in your NEXT negotiation.
+- PTO / vacation days.
+- Professional development budget (conferences, courses, books).
+- Earlier performance review date (6 months instead of 12).
+
+Tips:
+- Competing offers are the single most powerful negotiation leverage you can have.
+- Be enthusiastic and collaborative in tone: "I'm very excited about this role. I'd love
+  to make this work — can we get to $X?"
+- Get all final terms in writing (email confirmation) before resigning your current role.
+- Salary negotiation is not adversarial — it is a collaborative process.
+
+------------------------------------------------------------------
+SECTION 2: EQUITY & COMPENSATION DEEP DIVE
+------------------------------------------------------------------
+
+Q: How do you evaluate an equity offer?
+Key concepts:
+- Vesting schedule: typically 4 years with a 1-year cliff (nothing for 12 months, then 25%
+  vests at month 12, then monthly/quarterly for 3 more years).
+- Cliff: vesting doesn't begin until you've stayed for the cliff period.
+- Strike price (exercise price): price at which you can buy your options. Lower = better.
+- 409A valuation: independent appraisal of the company's fair market value (for tax purposes).
+  Your strike price ≈ 409A FMV at time of grant.
+- ISOs (Incentive Stock Options): favorable tax treatment for employees. Subject to AMT.
+  Must exercise within 90 days of leaving — plan accordingly.
+- NSOs (Non-qualified Stock Options): taxed as ordinary income at exercise regardless of
+  whether you sell. Less favorable than ISOs.
+- RSUs (Restricted Stock Units): actual shares granted on a vesting schedule. No strike price.
+  Taxed as ordinary income at vesting. Standard at public companies (Google, Amazon, Meta).
+- Common vs. Preferred: startups issue common stock to employees, preferred to investors.
+  In a downside exit, preferred shareholders are paid first — your common stock may be worthless.
+
+Evaluating startup equity:
+1. Ask for the total shares outstanding (fully diluted cap table).
+2. Calculate your ownership percentage: your_shares / total_shares_outstanding.
+3. Estimate current value: ownership % × 409A valuation.
+4. Model exit scenarios: conservative (1x revenue), base (3x), optimistic (10x).
+5. Factor in dilution from future funding rounds (typically 20-30% per round).
+6. Consider liquidation preferences: if investors have 2x participating liquidation preference,
+   they get paid before common shareholders in a modest exit.
+
+Tips:
+- RSUs at a public company (liquid, known value) > options at an uncertain-exit startup.
+- Ask: "What is the last 409A valuation?" and "What % of the company do these shares represent?"
+- Time to liquidity matters: options expiring in 5 years at a startup still in Series B are risky.
+
+------------------------------------------------------------------
+SECTION 3: OFFER EVALUATION FRAMEWORK
+------------------------------------------------------------------
+
+Evaluate an offer holistically using this scorecard (rate each 1-10, weight by personal priority):
+
+Financial:
+- Base salary (vs. market data from levels.fyi and competing offers)
+- Total comp (base + bonus + equity annual value)
+- Equity quality (RSUs at public co vs. options at startup, strike price, vesting)
+- Bonus structure (guaranteed vs. discretionary; target % vs. actual historical payout)
+- Benefits: health insurance quality, 401k match %, dental/vision coverage
+
+Career growth:
+- Learning velocity: will you be challenged and acquire new skills?
+- Promotion frequency and clarity: is the promotion criteria transparent?
+- Brand value: does this company name on your resume open doors in 3-5 years?
+- Management quality: research your potential manager on LinkedIn and Glassdoor.
+
+Culture & life quality:
+- Remote/hybrid flexibility
+- Team culture (Glassdoor reviews, informational interviews with current employees)
+- Mission alignment: do you care about what the company does?
+- Tech stack: will you work with modern, marketable technologies?
+
+Decision framework:
+- Write down your must-haves (dealbreakers) vs. nice-to-haves before evaluating any offer.
+- If evaluating multiple offers: don't rush — most companies will give you 3-5 business days.
+- When comparing offers: use total comp over 4 years (include equity vesting schedule).
+
+------------------------------------------------------------------
+SECTION 4: PERSONAL BRANDING & ONLINE PRESENCE
+------------------------------------------------------------------
+
+LinkedIn profile optimization:
+- Headline: [Role] | [2-3 key skills/technologies] | [Differentiator]
+  Example: "Backend Engineer | Python, Kubernetes, AWS | Building distributed systems at scale"
+- Summary (About section): 3-4 sentences. Lead with your value proposition, not your job history.
+  Include: your expertise, the problems you solve, what you're passionate about, call to action.
+- Experience: each role should have 3-5 bullet points with quantified achievements.
+  Format: [Action verb] [what you did] → [quantified result]. Example:
+  "Redesigned the checkout API → reduced latency by 40%, saving $200K/year in infrastructure cost."
+- Skills: prioritize skills that appear in job descriptions for your target roles.
+- Recommendations: 3+ thoughtful recommendations from managers/senior peers are high-signal.
+
+GitHub portfolio tips:
+- Pin 4-6 repositories that represent your best and most relevant work.
+- Every pinned repo must have: a detailed README with screenshots/demo link, clear setup instructions,
+  and documentation of key design decisions.
+- Contribution graph matters: consistent green squares signal active engagement.
+- Contribute to 1-2 open source projects — shows collaboration skills and real-world code quality.
+
+Personal website / portfolio:
+- Must-haves: projects section with problem → solution → tech stack → outcome, About page,
+  resume download, contact/LinkedIn link.
+- Showcase: live demos of projects (Vercel, Netlify, Render — all free tier) carry more weight than GitHub links.
+- For ML/Data roles: include a Kaggle profile or published notebooks.
+- Domain: your-name.dev or your-name.com — invest $10/year in a personal domain.
+
+------------------------------------------------------------------
+SECTION 5: "TELL ME ABOUT YOURSELF" TEMPLATES
+------------------------------------------------------------------
+
+Structure: Present → Past → Future (always in this order).
+
+Entry Level template:
+"I recently graduated with a [degree] in [field] from [university], where I focused on
+[specialization]. During my studies, I [key project/internship that demonstrates the core skill].
+Before that, I [relevant experience or achievement]. I'm excited about this [role] at [company]
+because [specific reason tied to company mission/tech stack] — I'd love to contribute my [skill]
+to [specific team/product goal]."
+
+Mid Level template:
+"I'm a [role] with [X] years of experience specializing in [2-3 core areas]. Most recently at
+[company], I [key achievement with quantified impact]. Before that at [previous company], I [relevant
+achievement]. I'm looking to [next step — more scope, different domain, leadership] and [company]
+stood out because [specific reason: tech stack, scale, mission, team]."
+
+Senior Level template:
+"I've spent the last [X] years building and leading [type of systems/teams] at [company/companies].
+My most recent work at [company] involved [high-impact achievement at scale]. I'm known for [2-3
+defining strengths — e.g., simplifying complex systems, building high-performing teams, shipping
+at scale]. I'm exploring opportunities where I can [specific goal], and [company]'s work on [specific
+product/challenge] is exactly the type of problem I want to tackle next."
+
+Tips:
+- Practice your "Tell me about yourself" until it's completely natural — it sets the tone.
+- Tailor it to the company: reference something specific about them every time.
+- Keep it under 90 seconds — it's an intro, not a monologue.
+
+------------------------------------------------------------------
+SECTION 6: INTERVIEW POST-MORTEM TEMPLATE
+------------------------------------------------------------------
+
+After every interview round, document the following:
+1. Questions asked (exact wording if possible)
+2. Your answer — what went well, what felt weak
+3. Interviewer's reaction and follow-up questions
+4. What you wish you had said differently
+5. Topics you didn't know — add to study list
+6. General vibe: culture fit signals, team energy, red/green flags
+7. Your interest level in the role (1-10) after the interview — gut check
+
+Using post-mortems:
+- Review before the next round with the same company.
+- Build a personal Q&A library from repeated questions across companies.
+- Track which question categories you consistently struggle with — focus prep there.
+- Share anonymized notes with peers for mutual benefit.

@@ -1,115 +1,105 @@
 """
 prompt_templates.py
 ===================
-Structured prompt template for the IBM Granite generation model.
+Upgraded structured prompt template for the IBM Granite / Llama generation model.
 
-Design goals
-------------
-- Instruct Granite to return ONLY valid JSON matching the schema below.
-- Include a complete few-shot example so the model understands the format
-  without ambiguity (critical for reliable JSON output from a chat model).
-- Use clear section delimiters (###) that are robust to slight model quirks.
-- Keep the system instruction concise — Granite 3.x is instruction-following
-  but benefits from explicit, structured directives.
-
-Output JSON schema
-------------------
+Output JSON schema (v2)
+-----------------------
 {
-  "technical_questions": [
+  "technical_questions": [           // EXACTLY 8 items
     {
-      "question": "string",
-      "model_answer": "string",
-      "tips": ["string", "string"]
+      "question":            "string",
+      "difficulty":          "foundational | intermediate | advanced",
+      "why_asked":           "string",   // what skill/concept this tests
+      "model_answer":        "string",   // 3-5 sentences, concrete
+      "code_example":        "string | null",
+      "tips":                ["string", "string", "string"],  // exactly 3
+      "follow_up_question":  "string"
     }
-    // × 5
   ],
-  "behavioral_questions": [
+  "behavioral_questions": [          // EXACTLY 5 items
     {
-      "question": "string",
+      "question":            "string",
+      "competency_tested":   "string",
       "star_answer_outline": "string",
-      "tips": ["string", "string"]
+      "red_flags_to_avoid":  ["string", "string"],  // exactly 2
+      "tips":                ["string", "string", "string"]   // exactly 3
     }
-    // × 3
   ],
-  "confidence_checklist": ["string", ...]   // 5-7 items
+  "confidence_checklist":            ["string", ...],  // 7-10 items
+  "role_study_roadmap": {
+    "week_1":    ["string", "string", "string"],
+    "week_2":    ["string", "string", "string"],
+    "day_before": ["string", "string"]
+  },
+  "questions_to_ask_interviewer": ["string", "string", "string", "string"]
 }
 """
 
 # ── System instruction ────────────────────────────────────────────────────────
-# Granite 3.3 respects a clear system role separator.  We define the model's
-# persona, output format, and strictness requirements here.
 
 _SYSTEM_INSTRUCTION = """\
-You are an expert interview coach with deep knowledge of technical hiring \
-processes, behavioral assessment frameworks, and industry best practices. \
-Your task is to generate a tailored interview preparation kit for a job candidate.
+You are a world-class interview coach and hiring manager with 15+ years of experience \
+at top technology companies and consulting firms. You have conducted over 2,000 technical \
+and behavioral interviews. Your task is to generate a COMPREHENSIVE, DEEPLY PERSONALISED \
+interview preparation kit for a specific candidate.
 
-CRITICAL RULES — follow these exactly:
+ABSOLUTE RULES — follow these exactly or the output is invalid:
 1. Respond with ONLY a single valid JSON object. No markdown, no code fences, \
 no explanations before or after the JSON.
-2. The JSON must match the schema shown in the example below precisely.
-3. Generate exactly 5 technical questions and exactly 3 behavioral questions.
-4. Each question must have exactly 2 tips.
-5. The confidence_checklist must contain 5 to 7 short, actionable bullet points.
-6. Do not truncate. Complete every field fully.
+2. The JSON must match the schema shown in the example below precisely — same keys, same types.
+3. Generate EXACTLY 8 technical questions and EXACTLY 5 behavioral questions.
+4. Each technical question MUST have exactly 3 tips, a difficulty tag \
+(foundational/intermediate/advanced), a why_asked explanation, \
+a follow_up_question, and a code_example (string or null).
+5. Each behavioral question MUST have exactly 3 tips, a competency_tested tag, \
+and exactly 2 red_flags_to_avoid.
+6. confidence_checklist must contain 7 to 10 short, actionable bullet points.
+7. role_study_roadmap must include week_1 (3 items), week_2 (3 items), \
+and day_before (2 items).
+8. questions_to_ask_interviewer must contain exactly 4 thoughtful, role-specific questions.
+9. ALL answers must be SPECIFIC and ACTIONABLE — never vague, never generic. \
+Reference the retrieved context and the candidate's profile explicitly.
+10. Do NOT truncate any field. Complete every field fully.
 """
 
-# ── Few-shot example ──────────────────────────────────────────────────────────
-# A single worked example greatly improves JSON reliability with Granite.
-# The example uses a generic "Software Engineer / Entry Level" scenario so it
-# is clearly distinguishable from the actual task injected later.
+# ── JSON schema example (compact — saves input tokens) ───────────────────────
 
 _FEW_SHOT_EXAMPLE = """\
-### EXAMPLE (do not use this data — it is for format guidance only) ###
-
-INPUT:
-- Candidate: Alex, Entry Level Software Engineer
-- Context: Python, REST APIs, data structures
-
-OUTPUT:
+### REQUIRED JSON SCHEMA — output must follow this structure exactly ###
 {
   "technical_questions": [
     {
-      "question": "Explain the difference between a list and a tuple in Python.",
-      "model_answer": "Lists are mutable sequences; tuples are immutable. \
-Use tuples for data that should not change (e.g., RGB values, coordinates) \
-and lists when you need to append, remove, or sort items. Tuples are slightly \
-faster to create and can be used as dictionary keys.",
-      "tips": [
-        "Mention that tuples are hashable and can serve as dict keys or set members.",
-        "Give a concrete example: coordinates as a tuple vs. a shopping cart as a list."
-      ]
+      "question": "<string>",
+      "difficulty": "<foundational|intermediate|advanced>",
+      "why_asked": "<1 sentence>",
+      "model_answer": "<3-5 sentences>",
+      "code_example": "<short code string or null>",
+      "tips": ["<tip 1>", "<tip 2>", "<tip 3>"],
+      "follow_up_question": "<string>"
     }
   ],
   "behavioral_questions": [
     {
-      "question": "Tell me about a time you had to learn a new technology quickly.",
-      "star_answer_outline": "Situation: joined a project two weeks before a \
-deadline that required React (which I had not used before). Task: become \
-productive enough to contribute meaningful frontend code. Action: completed \
-the official React tutorial in two days, then built a small practice component, \
-paired with a senior engineer for code review. Result: delivered two features \
-on time; team lead noted the quality of my code in the retro.",
-      "tips": [
-        "Quantify how quickly you became productive (e.g., contributing within 3 days).",
-        "Emphasise the learning strategy, not just the outcome."
-      ]
+      "question": "<string>",
+      "competency_tested": "<string>",
+      "star_answer_outline": "<Situation/Task/Action/Result>",
+      "red_flags_to_avoid": ["<pitfall 1>", "<pitfall 2>"],
+      "tips": ["<tip 1>", "<tip 2>", "<tip 3>"]
     }
   ],
-  "confidence_checklist": [
-    "Review Python fundamentals: lists, dicts, comprehensions, and generators.",
-    "Practice explaining Big-O complexity for common operations.",
-    "Prepare two STAR stories covering learning agility and teamwork.",
-    "Research the company's tech stack and recent engineering blog posts.",
-    "Prepare three thoughtful questions to ask the interviewer."
-  ]
+  "confidence_checklist": ["<item 1>", "...", "<item 7-10>"],
+  "role_study_roadmap": {
+    "week_1": ["<task 1>", "<task 2>", "<task 3>"],
+    "week_2": ["<task 1>", "<task 2>", "<task 3>"],
+    "day_before": ["<task 1>", "<task 2>"]
+  },
+  "questions_to_ask_interviewer": ["<q1>", "<q2>", "<q3>", "<q4>"]
 }
-
-### END EXAMPLE ###
+### END SCHEMA ###
 """
 
 # ── Main prompt template ──────────────────────────────────────────────────────
-# Placeholders are filled by build_prompt() below.
 
 _MAIN_TEMPLATE = """\
 {system_instruction}
@@ -133,19 +123,34 @@ RETRIEVED KNOWLEDGE BASE CONTEXT (use this to ground your questions and answers)
 ---
 
 INSTRUCTIONS:
-- Generate 5 technical questions highly relevant to the "{target_role}" role \
-at {experience_level} level. Base questions and model answers on the retrieved \
-context above.
-- Generate 3 behavioral / HR questions in STAR format appropriate for the \
-experience level.
-- For each question (both technical and behavioral), provide exactly 2 \
-specific, actionable improvement tips.
-- Generate a confidence_checklist of 5-7 short, actionable preparation items \
-tailored to this candidate's profile.
-- If a resume summary is provided, personalise questions to the candidate's \
-stated skills and background.
-- Return ONLY the JSON object. No markdown fences. No text before or after \
-the JSON.
+- Generate 8 technical questions spanning fundamentals (2), applied/project skills (3), \
+system design (2), and one growth/culture-fit question (1).
+  Calibrate difficulty to experience level:
+    Entry Level  → 3 foundational, 4 intermediate, 1 advanced
+    Mid Level    → 1 foundational, 4 intermediate, 3 advanced
+    Senior Level → 0 foundational, 2 intermediate, 6 advanced
+- Generate 5 behavioral questions covering: Collaboration, Leadership/Initiative, \
+Problem-solving under pressure, Adaptability/Learning, and Communication/Feedback.
+- For EACH technical question, include:
+  * difficulty: one of "foundational", "intermediate", "advanced"
+  * why_asked: 1 sentence explaining what skill this tests
+  * model_answer: 3-5 sentences, concrete and specific
+  * code_example: a short relevant code snippet string, or null if not applicable
+  * tips: exactly 3 specific, actionable improvement tips (NOT generic advice)
+  * follow_up_question: the likely follow-up the interviewer will ask to probe depth
+- For EACH behavioral question, include:
+  * competency_tested: the core competency (e.g., "Leadership", "Resilience")
+  * star_answer_outline: Situation → Task → Action → Result framework filled in
+  * red_flags_to_avoid: exactly 2 specific pitfalls candidates make on this question
+  * tips: exactly 3 specific, actionable tips
+- confidence_checklist: 7-10 short actionable preparation items for this specific profile.
+- role_study_roadmap: realistic 2-week study plan + day-before checklist tailored to \
+gaps implied by the candidate's level and role.
+- questions_to_ask_interviewer: 4 insightful, role-specific questions (not generic).
+- If a resume summary is provided, anchor at least 3 technical questions directly to \
+the candidate's stated skills and projects.
+- Base questions and model answers on the retrieved context chunks above.
+- Return ONLY the JSON object. No markdown fences. No text before or after the JSON.
 
 JSON OUTPUT:"""
 
@@ -158,7 +163,7 @@ def build_prompt(
     resume_summary: str = "",
 ) -> str:
     """
-    Assemble the full Granite prompt from the template and runtime values.
+    Assemble the full prompt from the template and runtime values.
 
     Parameters
     ----------
@@ -172,13 +177,11 @@ def build_prompt(
     -------
     A fully assembled prompt string ready to pass to ModelInference.generate_text().
     """
-    # Format the retrieved chunks into a numbered list for readability.
     formatted_context = "\n\n".join(
         f"[Chunk {i + 1}]\n{chunk.strip()}"
         for i, chunk in enumerate(context_chunks)
     )
 
-    # Only add the resume section if a summary was provided.
     if resume_summary and resume_summary.strip():
         resume_section = (
             f"CANDIDATE RESUME / JD SUMMARY:\n{resume_summary.strip()}\n"

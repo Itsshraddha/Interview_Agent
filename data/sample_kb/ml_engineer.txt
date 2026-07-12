@@ -1,0 +1,190 @@
+KNOWLEDGE BASE: Machine Learning Engineer Interview Questions & Guidelines
+=========================================================================
+
+ROLE: Machine Learning Engineer / AI Engineer / Applied Scientist
+EXPERIENCE LEVELS: Entry (0-2 yrs), Mid (2-5 yrs), Senior (5+ yrs)
+
+------------------------------------------------------------------
+SECTION 1: ML FUNDAMENTALS
+------------------------------------------------------------------
+
+Q: Explain the bias-variance tradeoff. How do you diagnose and fix each?
+A: Bias: error from overly simplistic assumptions — model underfits (high training AND test error).
+Cause: model too simple (linear model on non-linear data), insufficient features, too much
+regularization.
+Variance: error from excessive sensitivity to training data — model overfits (low training error,
+high test error).
+Cause: model too complex, too many features, too little data, insufficient regularization.
+Tradeoff: decreasing bias typically increases variance and vice versa.
+Diagnosis: learning curves (train vs. validation error vs. dataset size).
+- High bias: training and validation error both high and close together → use more complex model,
+  add features, reduce regularization.
+- High variance: training error much lower than validation error → get more data, add regularization
+  (L1/L2/dropout), reduce model complexity, use cross-validation.
+Tips:
+- Always plot learning curves before hyperparameter tuning — they reveal the fundamental problem.
+- Ensemble methods (bagging/boosting) explicitly target variance/bias respectively.
+- Data augmentation is often the most cost-effective way to reduce variance.
+
+Q: What regularization techniques do you know? When do you use each?
+A: L1 (Lasso): adds |weights| penalty → drives some weights to exactly zero → sparse models,
+  implicit feature selection. Good when you suspect many features are irrelevant.
+L2 (Ridge): adds weights² penalty → shrinks all weights uniformly, never to exactly zero.
+  Good for correlated features; more numerically stable than L1.
+Elastic Net: combines L1 + L2 — best of both worlds for high-dimensional data.
+Dropout (neural networks): randomly zeros activations during training → each neuron learns
+  robust representations not dependent on specific neighbors. Rate 0.2-0.5 typical.
+Early stopping: halt training when validation loss stops improving — implicit regularization.
+Data augmentation: artificially expands training set → reduces overfitting.
+Weight decay: L2 in the optimizer (AdamW).
+Tips:
+- Start with L2 + early stopping as a baseline for neural networks.
+- L1 is preferred when interpretability matters (sparse, explainable weights).
+- Batch normalization has a mild regularization effect; do NOT use dropout + batchnorm naively.
+
+Q: Explain gradient descent and its variants (SGD, Mini-batch, Adam).
+A: Gradient Descent (GD): compute gradient over the entire dataset → update weights.
+  Pros: stable convergence. Cons: very slow for large datasets, infeasible for online learning.
+Stochastic GD (SGD): update weights after each single sample.
+  Pros: fast updates, can escape local minima. Cons: very noisy, slow convergence.
+Mini-batch GD: update weights after a batch (32-256 samples) — balance of GD and SGD.
+  Standard in deep learning. Batch size is a hyperparameter.
+Adam (Adaptive Moment Estimation): maintains per-parameter adaptive learning rates using
+  first (momentum) and second (RMS) moment estimates. Fast convergence, robust to noisy gradients.
+  Variants: AdaGrad, RMSprop, AdamW (with weight decay).
+Tips:
+- Adam is the default choice for most deep learning tasks.
+- SGD with momentum + learning rate scheduling often outperforms Adam on final test accuracy
+  for CNNs (but requires more tuning).
+- Learning rate is the most important hyperparameter — use a learning rate finder or cosine annealing.
+
+------------------------------------------------------------------
+SECTION 2: MODEL EVALUATION & METRICS
+------------------------------------------------------------------
+
+Q: When would you choose AUC-ROC over F1 score as your evaluation metric?
+A: AUC-ROC: measures the model's ability to distinguish between classes across ALL decision
+thresholds. Threshold-independent. Best for: ranking problems, when you'll tune the threshold
+later, imbalanced classes where you care about separability.
+F1 Score: harmonic mean of Precision and Recall at a SPECIFIC threshold. Best for: when you
+have a fixed decision threshold and both false positives and false negatives are costly.
+Precision: of all predicted positives, how many are truly positive. Use when FP cost is high
+(spam filter: don't put good emails in spam).
+Recall: of all actual positives, how many did you catch. Use when FN cost is high (cancer detection:
+don't miss sick patients).
+PR-AUC (Precision-Recall AUC): better than ROC-AUC for highly imbalanced datasets (rare
+positive class) — ROC can look artificially good when negatives dominate.
+Tips:
+- Always ask: what is the cost of a false positive vs. false negative? This determines the metric.
+- Log loss (cross-entropy) is better for calibration — use it when probabilities matter, not just rank.
+- For multi-class: macro vs. weighted F1 — weighted handles class imbalance by class frequency.
+
+Q: What is data leakage and how do you prevent it?
+A: Data leakage: training data contains information that would not be available at prediction
+time — causes misleadingly high validation performance that fails in production.
+Types:
+1. Target leakage: features computed USING the target variable (e.g., predicting churn using
+   "customer support escalation" which only happens after churn decision is made).
+2. Temporal leakage: using future data to predict the past (train on 2023 data, test on 2022).
+3. Train-test contamination: preprocessing (normalization, imputation, feature selection) fitted
+   on the full dataset before splitting — test statistics leak into training.
+Prevention:
+- Always split BEFORE any preprocessing; fit scaler/encoder ONLY on train set.
+- Use pipelines (sklearn Pipeline) to enforce fit-only-on-train discipline.
+- For time series: use walk-forward (expanding window) cross-validation, never random split.
+- Feature audit: for each feature ask "would I have this value at inference time?"
+Tips:
+- Suspiciously high accuracy (>95%) on a difficult problem is a red flag for leakage.
+- Document feature provenance — when was each feature computed relative to the target?
+
+------------------------------------------------------------------
+SECTION 3: MLOPS & PRODUCTION
+------------------------------------------------------------------
+
+Q: What is the difference between model training, model serving, and model monitoring?
+A: Training: process of fitting model parameters on historical data. Done offline/periodically.
+Tools: scikit-learn, PyTorch, TensorFlow, XGBoost, SageMaker Training Jobs.
+Serving (inference): deploying the trained model to serve real-time or batch predictions.
+Patterns: REST API (FastAPI + model loaded at startup), gRPC, batch prediction jobs, streaming
+inference (Kafka → model → Kafka). Tools: TorchServe, TF Serving, BentoML, Triton.
+Monitoring: tracking model performance in production over time.
+- Data drift: input feature distribution changes (concept drift, covariate shift).
+- Model drift: prediction distribution changes; performance degrades over time.
+- Infrastructure metrics: latency, throughput, error rate.
+Tools: Evidently AI, Arize, WhyLabs, custom dashboards in Grafana.
+Tips:
+- Shadow deployment: run new model in parallel with production model; compare predictions without
+  serving new model to users — zero risk, real production traffic.
+- Champion-challenger: route 5% traffic to challenger model; compare metrics; promote if better.
+- Set up automated retraining triggers based on data drift thresholds.
+
+Q: What is MLflow and how do you use it in a production ML workflow?
+A: MLflow is an open-source platform for managing the ML lifecycle:
+1. Tracking: log parameters, metrics, artifacts, model versions per experiment run.
+   mlflow.log_param("learning_rate", 0.01); mlflow.log_metric("f1", 0.87).
+2. Model Registry: centralized model store with versioning (Staging → Production → Archived).
+3. Model Serving: mlflow models serve -m "models:/churn-model/Production".
+4. Projects: reproducible ML code packages with defined environments.
+Integration: log to MLflow in training script; use Model Registry for promotion; deploy
+registered model to serving infrastructure.
+Tips:
+- Use autologging (mlflow.sklearn.autolog()) to capture all sklearn params/metrics automatically.
+- Store artifacts (confusion matrices, feature importance plots) as mlflow artifacts — not just metrics.
+- Connect MLflow to CI/CD: auto-register new model version on every training run; human approves promotion.
+
+------------------------------------------------------------------
+SECTION 4: LLMS & RAG
+------------------------------------------------------------------
+
+Q: What is Retrieval-Augmented Generation (RAG) and when do you use it vs. fine-tuning?
+A: RAG: retrieve relevant documents from a knowledge base at inference time, inject into the
+LLM prompt as context. The LLM generates an answer grounded in retrieved facts.
+Architecture: query → embedding → vector similarity search (ChromaDB, Pinecone, Weaviate) →
+top-k chunks → LLM prompt → answer.
+Fine-tuning: update model weights on domain-specific data to change the model's behavior,
+style, or knowledge permanently. Requires labeled training data and GPU compute.
+When to use RAG: frequently updated knowledge, proprietary/confidential data that shouldn't
+be in model weights, need for source attribution, large knowledge bases (>10M tokens).
+When to fine-tune: specific output format/style requirements, domain-specific terminology,
+when RAG latency is too high, task-specific capabilities (classification, extraction).
+Tips:
+- RAG and fine-tuning are complementary — combine both for best results.
+- Chunking strategy significantly impacts RAG quality: chunk size, overlap, and splitting
+  strategy should be tuned for the document type.
+- Hybrid search (dense + sparse BM25) often outperforms pure vector search.
+
+Q: Explain prompt engineering techniques for production LLM applications.
+A: Zero-shot: provide task description only; no examples. Works for simple tasks.
+Few-shot: provide 2-5 input-output examples; dramatically improves consistency and format adherence.
+Chain-of-thought (CoT): add "Let's think step by step" or explicit reasoning steps — improves
+accuracy on reasoning tasks.
+System prompts: define the model's persona, output format, and constraints at the system level.
+Output constraints: instruct the model to return JSON only; validate with json.loads() + retry logic.
+Structured output: use JSON schemas or grammar-constrained decoding (LlamaCPP GBNF grammar).
+Temperature: 0.0-0.3 for deterministic structured output; 0.7-1.0 for creative generation.
+Tips:
+- Test prompts with at least 50 diverse examples before deploying — edge cases reveal failures.
+- Version-control prompts like code; track prompt version alongside model version.
+- Use evaluation frameworks (RAGAS, LangSmith, promptfoo) to benchmark prompt changes.
+
+------------------------------------------------------------------
+SECTION 5: ML BEHAVIORAL QUESTIONS
+------------------------------------------------------------------
+
+Q: Tell me about an ML model you deployed to production that didn't perform as expected.
+STAR Guide:
+- Situation: describe the model, the problem it solved, and the initial results.
+- Task: your responsibility (training, evaluation, deployment, or monitoring).
+- Action: how you discovered the underperformance (monitoring, user feedback, business review);
+  what investigation you did (feature importance, error analysis, data audit).
+- Result: what you fixed, what you learned about evaluation vs. production performance gaps.
+Strong indicators: rigorous evaluation methodology, monitoring setup, root cause analysis.
+
+Q: How do you decide when a model is good enough to ship?
+A: Define "good enough" before training using business requirements:
+1. Minimum acceptable performance: what offline metric threshold maps to positive business impact?
+2. A/B test baseline: does the model outperform the current rule-based or previous ML system?
+3. Error analysis: what types of errors does the model make? Are they acceptable (low-cost errors)?
+4. Robustness testing: performance on edge cases, subgroups, and adversarial inputs.
+5. Stakeholder alignment: confirm the performance threshold with the product owner before shipping.
+Never ship purely on accuracy — always evaluate the business and user impact of specific error types.
