@@ -22,4 +22,4 @@ RUN python src/ingest.py || echo "Ingest skipped (credentials not available at b
 # HF Spaces uses port 7860; Render/Railway use $PORT
 EXPOSE 7860
 
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:7860", "--workers", "1", "--timeout", "120"]
+CMD ["sh", "-c", "gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120"]
